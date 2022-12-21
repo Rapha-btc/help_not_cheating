@@ -100,72 +100,44 @@
 ;; @response (ok bool) Returns true when vote is successful
 (define-public (vote (id uint) (choice principal)) 
     ;; IMPLEMENT HERE
-    (begin 
-    ;; 1. Any user can vote for the candidate only once. ;; user address must be absent in candidateVotes
-        (asserts! (is-none (map-get? CandidateVotes { address: choice, ballotId: id })) ERR_VOTED_ALREADY)
-    ;; 2. Validates that the the voter has not already voted ;; user address must be absent in voters map or false
-        (asserts! (is-none (map-get? Voters { address: choice, ballotId: id })) ERR_VOTED_ALREADY);; i wouldn't call choice choice, more like person who votes
-    ;; 3. Validates that the vote is not yet ended
-        (let 
+    (let
+
             (
                 (itEnded (get endsAt (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
-                
+                (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
+                (NumberPlus1 (+ NumberVotes u1))
+                (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )  ))
+                (voteCount1 (+ voteCount u1))
             )
+            
+    ;; 1. Any user can vote for the candidate only once. ;; user address must be absent in candidateVotes
+            (asserts! (is-none (map-get? CandidateVotes { address: choice, ballotId: id })) ERR_VOTED_ALREADY)
+    ;; 2. Validates that the the voter has not already voted ;; user address must be absent in voters map or false
+            (asserts! (is-none (map-get? Voters { address: choice, ballotId: id })) ERR_VOTED_ALREADY);; i wouldn't call choice choice, more like person who votes
+    ;; 3. Validates that the vote is not yet ended
             (asserts! (< block-height itEnded) ERR_VOTING_ENDED)
-            (ok true)
-        )
     ;; 4. updates the voter info who has voted ;; map setting voters
-        (map-set Voters { address: choice, ballotId: id } true)
+            (map-set Voters { address: choice, ballotId: id } true)
     ;; 5. updates the total count on the ballot ;; update ballot # ballotID of candidate
-        (let
-            ( 
-            (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) ))
-            (NumberPlus1 (+ NumberVotes u1))
-            )
             (merge (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) {totalVotes: NumberPlus1})
-            ;; (map-set Ballot id 
-            ;;     { ;;let's define the map Ballot number uint - takes name, starts, ends, totalVotes, status, 10 candidates and owner
-            ;;         name: name, 
-            ;;         startsAt: startsAt, 
-            ;;         endsAt: endsAt, 
-            ;;         totalVotes: NumberPlus1 
-            ;;         status: status,
-            ;;         candidates: candidates,
-            ;;         owner: choice
-            ;;     }
-            ;; )
-            (ok true)
-        )
     ;; 6. updates the total count for a candidate ;; update candidatevotes
-        (let
-            ( 
-            (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )  ))
-            (voteCount1 (+ voteCount u1))
-            )
             (merge (unwrap! (map-get CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
             ;; (map-set CandidateVotes { address: choice, ballotId: id } { votes: voteCount1, name: name } )
             (ok true)
-        )
-        (ok true)
     )
 )
 
 
 (define-public (end-vote (id uint))
-    ;; IMPLEMENT HERE
-    (begin 
-        ;; @function end-vote: will delete ballot that has expired
+    (let 
+        (
+            (itEnded (get endsAt (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
+        )
         ;; 1. Only the owner/admin can end vote
         (asserts! (is-eq (as-contract tx-sender) tx-sender) ERR_UNAUTHORIZED);;only contract owner
-        
         ;; 2. cannot end before expiry is reached
-        (let 
-            (
-            (itEnded (get endsAt (map-get? Ballot id)))
-            )
-            (asserts! (> block-height itEnded) ERR_CANNOT_END_BEFORE_EXPIRY)
-        )
-        
+        (asserts! (> block-height itEnded) ERR_CANNOT_END_BEFORE_EXPIRY)
+
         ;; 3. deletes the ballot from the map
         (map-delete Ballot id)
         ;; @param id:uint :: ballot id which you want to end
@@ -173,8 +145,6 @@
         (ok true)
     )
 )
-
-
 
 ;; read-only functions
 ;;
