@@ -1,4 +1,4 @@
-
+;; let's ask for help to peers to review this
 ;; voting
 
 ;; constants
@@ -10,7 +10,6 @@
 (define-constant ERR_VOTED_ALREADY (err u104)) ;; u can't vote twice
 (define-constant ERR_VOTING_ENDED (err u105)) ;; too late sir
 (define-constant ERR_CANNOT_END_BEFORE_EXPIRY (err u106)) ;;expiration is expiration not before
-
 ;; data maps and vars
 ;;
 (define-data-var ballotId uint u0) ;;BallotId is an uint intitialized at u0
@@ -75,7 +74,7 @@
 ;;I forgot what let is for -> it's for having newBallotId as a local variable in the contract
 ;; being able to reuse it, separately, per function
                         (map init-candidates candidates) ;; map takes a function- almost like calling function on each element of list
-                        (map-set Ballot newBallotId { ;;newballotID is u1 
+                        (map-set Ballot newBallotId { ;;newballotID is u1
                                 name: name, 
                                 startsAt: block-height, 
                                 endsAt: endsAt, 
@@ -123,26 +122,28 @@
             (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) ))
             (NumberPlus1 (+ NumberVotes u1))
             )
-            (map-set Ballot id 
-                { ;;let's define the map Ballot number uint - takes name, starts, ends, totalVotes, status, 10 candidates and owner
-                    name: name, 
-                    startsAt: startsAt, 
-                    endsAt: endsAt, 
-                    totalVotes: NumberPlus1 
-                    status: status,
-                    candidates: candidates,
-                    owner: choice
-                }
-            )
+            (merge (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) {totalVotes: NumberPlus1})
+            ;; (map-set Ballot id 
+            ;;     { ;;let's define the map Ballot number uint - takes name, starts, ends, totalVotes, status, 10 candidates and owner
+            ;;         name: name, 
+            ;;         startsAt: startsAt, 
+            ;;         endsAt: endsAt, 
+            ;;         totalVotes: NumberPlus1 
+            ;;         status: status,
+            ;;         candidates: candidates,
+            ;;         owner: choice
+            ;;     }
+            ;; )
             (ok true)
         )
     ;; 6. updates the total count for a candidate ;; update candidatevotes
         (let
             ( 
-            (voteCount (get votes (map-get? CandidateVotes { address: choice, ballotId: id } ) ))
-            (voteCount (+ voteCount u1))
+            (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )  ))
+            (voteCount1 (+ voteCount u1))
             )
-            (map-set CandidateVotes { address: choice, ballotId: id } { votes: voteCount, name: name } )
+            (merge (unwrap! (map-get CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
+            ;; (map-set CandidateVotes { address: choice, ballotId: id } { votes: voteCount1, name: name } )
             (ok true)
         )
         (ok true)
