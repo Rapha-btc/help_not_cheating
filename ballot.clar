@@ -97,18 +97,17 @@
 
 ;; @param id:uint :: ballot id for which you want to vote
 ;; @param choice:principal 
-;; @response (ok bool) Returns true when vote is successful
+
 (define-public (vote (id uint) (choice principal)) 
     ;; IMPLEMENT HERE
     (let
-
-            (
-                (itEnded (get endsAt (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
-                (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
-                (NumberPlus1 (+ NumberVotes u1))
-                (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )  ))
-                (voteCount1 (+ voteCount u1))
-            )
+        (
+            (itEnded (get endsAt (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
+            (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
+            (NumberPlus1 (+ NumberVotes u1))
+            (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )))
+            (voteCount1 (+ voteCount u1))
+        )
             
     ;; 1. Any user can vote for the candidate only once. ;; user address must be absent in candidateVotes
             (asserts! (is-none (map-get? CandidateVotes { address: choice, ballotId: id })) ERR_VOTED_ALREADY)
@@ -121,12 +120,11 @@
     ;; 5. updates the total count on the ballot ;; update ballot # ballotID of candidate
             (merge (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) {totalVotes: NumberPlus1})
     ;; 6. updates the total count for a candidate ;; update candidatevotes
-            (merge (unwrap! (map-get CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
-            ;; (map-set CandidateVotes { address: choice, ballotId: id } { votes: voteCount1, name: name } )
+            (merge (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
+            
             (ok true)
     )
 )
-
 
 (define-public (end-vote (id uint))
     (let 
