@@ -109,6 +109,7 @@
             (voteCount1 (+ voteCount u1))
 
             (thisTupple (merge (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) {totalVotes: NumberPlus1}))
+            (ThisSuperNovaTupple (merge (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )) 
         )
             
     ;; 1. Any user can vote for the candidate only once. 
@@ -122,7 +123,7 @@
     ;; 5. updates the total count on the ballot ;; update ballot # ballotID of candidate
             (map-set Ballot id thisTupple)
     ;; 6. updates the total count for a candidate ;; update candidatevotes
-            (map-set CandidateVotes { address: choice, ballotId: id }  { votes: voteCount1, name: "whatever" })
+            (map-set CandidateVotes { address: choice, ballotId: id }  ThisSuperNovaTupple)
             ;; (merge (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
             (ok true)
     )
