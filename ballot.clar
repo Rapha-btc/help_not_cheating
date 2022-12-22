@@ -105,12 +105,12 @@
             (itEnded (get endsAt (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
             (NumberVotes (get totalVotes (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND)))
             (NumberPlus1 (+ NumberVotes u1))
-            (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_BALLOT_NOT_FOUND )))
+            (voteCount (get votes (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND)))
             (voteCount1 (+ voteCount u1))
         )
             
     ;; 1. Any user can vote for the candidate only once. ;; user address must be absent in candidateVotes
-            (asserts! (is-none (map-get? CandidateVotes { address: choice, ballotId: id })) ERR_VOTED_ALREADY)
+            (asserts! (is-none (map-get? CandidateVotes { address: choice, ballotId: id })) ERR_CANDIDATE_NOT_FOUND)
     ;; 2. Validates that the the voter has not already voted ;; user address must be absent in voters map or false
             (asserts! (is-none (map-get? Voters { address: choice, ballotId: id })) ERR_VOTED_ALREADY);; i wouldn't call choice choice, more like person who votes
     ;; 3. Validates that the vote is not yet ended
@@ -121,7 +121,6 @@
             (merge (unwrap! (map-get? Ballot id) ERR_BALLOT_NOT_FOUND) {totalVotes: NumberPlus1})
     ;; 6. updates the total count for a candidate ;; update candidatevotes
             (merge (unwrap! (map-get? CandidateVotes { address: choice, ballotId: id } ) ERR_CANDIDATE_NOT_FOUND) { votes: voteCount1} )
-            
             (ok true)
     )
 )
